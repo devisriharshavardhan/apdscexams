@@ -1,11 +1,12 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Header from './components/Header';
 import QuizConfigForm from './components/QuizConfigForm';
 import QuizPlayer from './components/QuizPlayer';
 import QuizResults from './components/QuizResults';
 import Testimonials from './components/Testimonials';
-import { QuizConfig, QuizState, Question } from './types';
+import { QuizConfig, QuizState } from './types';
 import { generateQuizQuestions } from './services/geminiService';
+import { Key } from 'lucide-react';
 
 const App: React.FC = () => {
   const [gameState, setGameState] = useState<QuizState>({
@@ -15,6 +16,25 @@ const App: React.FC = () => {
     answers: {},
     score: 0,
   });
+
+  const [hasKey, setHasKey] = useState<boolean>(true);
+
+  useEffect(() => {
+    const checkKey = async () => {
+      if (window.aistudio?.hasSelectedApiKey) {
+        const selected = await window.aistudio.hasSelectedApiKey();
+        setHasKey(selected);
+      }
+    };
+    checkKey();
+  }, []);
+
+  const handleOpenKey = async () => {
+    if (window.aistudio?.openSelectKey) {
+      await window.aistudio.openSelectKey();
+      setHasKey(true);
+    }
+  };
 
   const handleStartQuiz = async (config: QuizConfig) => {
     setGameState((prev) => ({ ...prev, status: 'generating', errorMessage: undefined }));
@@ -27,11 +47,10 @@ const App: React.FC = () => {
         currentQuestionIndex: 0,
         answers: {},
         score: 0,
-        timeLimit: config.timeLimit, // Store timeLimit in state
-        language: config.language, // Store language
+        timeLimit: config.timeLimit,
+        language: config.language,
       });
     } catch (error) {
-       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const message = error instanceof Error ? error.message : "An unexpected error occurred.";
       setGameState((prev) => ({ ...prev, status: 'error', errorMessage: message }));
     }
@@ -60,9 +79,22 @@ const App: React.FC = () => {
     <div className="min-h-screen bg-slate-50 flex flex-col">
       <Header />
       
+      {!hasKey && (
+        <div className="bg-amber-100 border-b border-amber-200 p-4 text-center flex items-center justify-center gap-4">
+          <p className="text-amber-800 text-sm font-medium">
+            High-quality image generation requires a selected API key. 
+            <a href="https://ai.google.dev/gemini-api/docs/billing" target="_blank" className="underline ml-1">Learn more about billing.</a>
+          </p>
+          <button 
+            onClick={handleOpenKey}
+            className="px-4 py-1.5 bg-amber-600 text-white rounded-lg text-sm font-bold flex items-center gap-2 hover:bg-amber-700 transition-colors"
+          >
+            <Key size={16} /> Select API Key
+          </button>
+        </div>
+      )}
+
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 flex flex-col items-center">
-        
-        {/* State: IDLE or ERROR */}
         {(gameState.status === 'idle' || gameState.status === 'error' || gameState.status === 'generating') && (
           <>
             <div className="text-center mb-10 max-w-2xl">
@@ -80,13 +112,10 @@ const App: React.FC = () => {
               error={gameState.errorMessage}
             />
 
-            {gameState.status !== 'generating' && (
-                <Testimonials />
-            )}
+            {gameState.status !== 'generating' && <Testimonials />}
           </>
         )}
 
-        {/* State: ACTIVE */}
         {gameState.status === 'active' && (
           <QuizPlayer 
             questions={gameState.questions}
@@ -96,7 +125,6 @@ const App: React.FC = () => {
           />
         )}
 
-        {/* State: COMPLETED */}
         {gameState.status === 'completed' && (
           <QuizResults 
             score={gameState.score}
@@ -106,7 +134,6 @@ const App: React.FC = () => {
             onReset={handleReset}
           />
         )}
-
       </main>
 
       <footer className="bg-white border-t border-slate-200 py-6 mt-auto">
