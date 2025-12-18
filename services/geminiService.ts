@@ -1,4 +1,3 @@
-
 import { GoogleGenAI, Type } from "@google/genai";
 import { QuizConfig, Question, PostType } from "../types";
 import { EXAM_PATTERNS } from "../constants";
@@ -6,13 +5,11 @@ import { EXAM_PATTERNS } from "../constants";
 const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const generateQuizQuestions = async (config: QuizConfig): Promise<Question[]> => {
-  // Ensure we check for API_KEY availability
-  if (!process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT') {
-    throw new Error("Subscriber authentication required. Please select your API key.");
+  if (!process.env.API_KEY) {
+    throw new Error("API configuration missing. Please ensure your environment is set up correctly.");
   }
 
-  // Always create a new instance to use the most recent key from the environment directly
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
   
   let promptDetails = "";
 
@@ -106,25 +103,15 @@ export const generateQuizQuestions = async (config: QuizConfig): Promise<Questio
       section: item.section
     }));
   } catch (error: any) {
-    // Handle the specific "Requested entity was not found" error as per guidelines to signal re-authentication
-    if (error.message?.includes("Requested entity was not found")) {
-      throw new Error("Subscriber session expired. Please re-authenticate your API key.");
-    }
     console.error("Gemini API Error:", error);
-    throw new Error("Failed to generate questions. Ensure your subscriber key is active.");
+    throw new Error("Failed to generate questions. Please try again in a few moments.");
   }
 };
 
-/**
- * Generates an illustrative image using Gemini 3 Pro Image.
- * Fix for QuizPlayer.tsx line 128: Added optional language parameter to signature.
- * Fix: Always using process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' directly for GoogleGenAI initialization.
- */
 export const generateIllustrativeImage = async (visualPrompt: string, language?: string): Promise<string> => {
-  if (!process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT') return "";
+  if (!process.env.API_KEY) return "";
 
-  // Always create a new instance right before making an API call
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
 
   const finalPrompt = `Premium educational diagram for ${language || 'English'} medium syllabus: ${visualPrompt}. 
   Mandatory Requirements:
@@ -144,14 +131,13 @@ export const generateIllustrativeImage = async (visualPrompt: string, language?:
       },
     });
 
-    // Iterate through candidates and parts to find the inlineData (image bytes)
     for (const part of response.candidates?.[0]?.content?.parts || []) {
       if (part.inlineData) {
         return `data:image/png;base64,${part.inlineData.data}`;
       }
     }
   } catch (error) {
-    console.error("High-quality image generation failed:", error);
+    console.error("Image generation failed:", error);
   }
 
   return "";
