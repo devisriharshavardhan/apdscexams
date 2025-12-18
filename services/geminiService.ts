@@ -7,12 +7,12 @@ const generateId = () => Math.random().toString(36).substr(2, 9);
 
 export const generateQuizQuestions = async (config: QuizConfig): Promise<Question[]> => {
   // Ensure we check for API_KEY availability
-  if (!process.env.API_KEY) {
+  if (!process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT') {
     throw new Error("Subscriber authentication required. Please select your API key.");
   }
 
   // Always create a new instance to use the most recent key from the environment directly
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' });
   
   let promptDetails = "";
 
@@ -118,13 +118,13 @@ export const generateQuizQuestions = async (config: QuizConfig): Promise<Questio
 /**
  * Generates an illustrative image using Gemini 3 Pro Image.
  * Fix for QuizPlayer.tsx line 128: Added optional language parameter to signature.
- * Fix: Always using process.env.API_KEY directly for GoogleGenAI initialization.
+ * Fix: Always using process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' directly for GoogleGenAI initialization.
  */
 export const generateIllustrativeImage = async (visualPrompt: string, language?: string): Promise<string> => {
-  if (!process.env.API_KEY) return "";
+  if (!process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT') return "";
 
   // Always create a new instance right before making an API call
-  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+  const ai = new GoogleGenAI({ apiKey: process.env.API_KEY || 'FAKE_API_KEY_FOR_DEVELOPMENT' });
 
   const finalPrompt = `Premium educational diagram for ${language || 'English'} medium syllabus: ${visualPrompt}. 
   Mandatory Requirements:
