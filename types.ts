@@ -31,21 +31,23 @@ export interface Question {
   options: string[];
   correctAnswerIndex: number;
   explanation: string;
-  additionalInfo: string; // Interesting fact or deeper context
-  visualPrompt: string; // English prompt to generate an image
-  section?: string; // The section/subject this question belongs to (e.g. GK, Psychology)
+  additionalInfo: string; 
+  visualPrompt: string; 
+  section?: string;
+  sourceExam?: string; // e.g. "AP DSC SGT"
+  sourceYear?: string; // e.g. "2018"
 }
 
 export interface QuizConfig {
   mode: 'practice' | 'exam';
   post: PostType;
   language: Language;
-  subject: string; // In practice mode: selected subject. In exam mode: selected stream (if applicable)
+  subject: string;
   topic: string; 
   difficulty: Difficulty;
   questionCount: number;
-  isPYQ: boolean; // Previous Year Question mode
-  timeLimit: number; // Time limit in minutes
+  isPYQ: boolean; 
+  timeLimit: number;
 }
 
 export interface QuizState {
